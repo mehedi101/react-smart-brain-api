@@ -1,9 +1,15 @@
 import express from 'express';
 // import routes from './routes'
+import bcrypt, { hash } from 'bcrypt';
+import cors from 'cors';
+
 import database from './database.js';
     
 const app = express();
 
+
+const saltRounds = 10;
+app.use(cors());
 app.use(express.json());
 
 const port= 3000;    
@@ -22,25 +28,41 @@ app.post('/login', (req, res) => {
 
     if( req.body.email === database.users[0].email && req.body.password === database.users[0].password ) {
 
-        res.send(`Hello ${database.users[0].name}, You have successfully logged in!`);
+         res.send({
+             message: `Hello ${database.users[0].name}, You have successfully logged in!`
+         });
+     //   res.send('success');
 
     } else{
 
-        res.status(400).send("There is something wrong!!"); 
+        res.status(400).send({errorMessage: "There is something wrong!!"}); 
     }
     
 });
 
+
+
+
+const hashPass = ( password ) => {
+    password="something";
+  return  bcrypt.hash(password, saltRounds).then( (hash) => {
+       console.log(hash);
+    })
+}
+
 app.post('/register', (req, res) => {
 
+
     const {name, email, password} = req.body;
+
+    
 
     database.users.push(
         {
             id :  Number(database.users[database.users.length - 1].id ) + 1,
             name : name,
             email : email,
-            password: password,
+            password: hashPass(password),
             rank : 0,
             logged_in: new Date() 
         }
@@ -50,6 +72,9 @@ app.post('/register', (req, res) => {
     res.send(
         database.users[database.users.length - 1]
     )
+    // res.send(
+    //    hashPass()
+    // )
 })
 
 
@@ -66,11 +91,13 @@ app.get('/profile/:id', (req, res) => {
    }
     
 
-})
+}) 
 
 
 app.put('/image', (req, res) =>{
+
  //  let user= getUser(req.body.id);
+
 
    let found = false;
 
