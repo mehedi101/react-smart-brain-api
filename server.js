@@ -21,16 +21,14 @@ const getUser = (id) => {
 }
 
 app.get('/', (req, res) => {
-    res.send( database.users);
+    res.json( database.users);
 });
 
 app.post('/login', (req, res) => {
 
     if( req.body.email === database.users[0].email && req.body.password === database.users[0].password ) {
 
-         res.send({
-             message: `Hello ${database.users[0].name}, You have successfully logged in!`
-         });
+         res.json(database.users[0]);
      //   res.send('success');
 
     } else{
@@ -43,35 +41,33 @@ app.post('/login', (req, res) => {
 
 
 
-const hashPass = ( password ) => {
+/* const hashPass = ( password ) => {
     password="something";
   return  bcrypt.hash(password, saltRounds).then( (hash) => {
        console.log(hash);
     })
-}
+} */
 
 app.post('/register', (req, res) => {
 
 
     const {name, email, password} = req.body;
 
-    
+    console.log('from_sender',req.body);
 
     database.users.push(
         {
             id :  Number(database.users[database.users.length - 1].id ) + 1,
             name : name,
             email : email,
-            password: hashPass(password),
+            password: password,
             rank : 0,
             logged_in: new Date() 
         }
 
     )
 
-    res.send(
-        database.users[database.users.length - 1]
-    )
+    res.json(  database.users[database.users.length - 1] )
     // res.send(
     //    hashPass()
     // )
@@ -105,7 +101,7 @@ app.put('/image', (req, res) =>{
     if(item.id  === req.body.id ){
         found=true;
         item.rank++ ;
-       return res.send(item);
+       return res.json(item.rank);
     }
 
    }) ;
