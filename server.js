@@ -1,121 +1,49 @@
 import express from 'express';
 // import routes from './routes'
-import bcrypt, { hash } from 'bcrypt';
+import bcrypt from 'bcrypt';
 import cors from 'cors';
+import knex from 'knex';
 
-import database from './database.js';
+
+import RegisterController from './controllers/registerController.js';
+import SigninController from './controllers/SigninController.js';
+import ProfileController from './controllers/ProfileController.js';
+import ImageController from './controllers/ImageController.js';
+import Users from './controllers/UsersController.js';
+import FaceDetectionController from './controllers/FaceDetectionController.js';
+
+const saltRounds = 10;
+const port= 3000;    
+
+const db= knex({
+    client:'pg',
+    connection:{
+        host: 'localhost',
+        user: 'postgres',
+        password: 'root', 
+        database: 'smart-brain'
+    }
+})
+
     
 const app = express();
 
 
-const saltRounds = 10;
+
 app.use(cors());
 app.use(express.json());
 
-const port= 3000;    
-
-const getUser = (id) => {
-
-    return database.users.filter( (item) =>item.id === id );
-
-}
-
-app.get('/', (req, res) => {
-    res.json( database.users);
-});
-
-app.post('/login', (req, res) => {
-
-    if( req.body.email === database.users[0].email && req.body.password === database.users[0].password ) {
-
-         res.json(database.users[0]);
-     //   res.send('success');
-
-    } else{
-
-        res.status(400).send({errorMessage: "There is something wrong!!"}); 
-    }
-    
-});
 
 
+app.get('/', (req, res) => {Users(req, res, db)});
+app.get('/profile/:id', (req, res) => { ProfileController(req, res, db); });
 
+app.post('/register', (req, res) => { RegisterController(req, res, db, bcrypt, saltRounds);} );
+app.post('/login', (req, res) => {SigninController(req, res, db, bcrypt, saltRounds)});
 
-/* const hashPass = ( password ) => {
-    password="something";
-  return  bcrypt.hash(password, saltRounds).then( (hash) => {
-       console.log(hash);
-    })
-} */
-
-app.post('/register', (req, res) => {
-
-
-    const {name, email, password} = req.body;
-
-    console.log('from_sender',req.body);
-
-    database.users.push(
-        {
-            id :  Number(database.users[database.users.length - 1].id ) + 1,
-            name : name,
-            email : email,
-            password: password,
-            rank : 0,
-            logged_in: new Date() 
-        }
-
-    )
-
-    res.json(  database.users[database.users.length - 1] )
-    // res.send(
-    //    hashPass()
-    // )
-})
-
-
-app.get('/profile/:id', (req, res) => {
-
-    const {id} = req.params;
-
-    let user= getUser(id);
-
-   if ( !user.length){
-        res.status(404).json("No User Found");
-   } else{
-    res.json(user) ;
-   }
-    
-
-}) 
-
-
-app.put('/image', (req, res) =>{
-
- //  let user= getUser(req.body.id);
-
-
-   let found = false;
-
-   database.users.forEach( (item, index) => {
-    if(item.id  === req.body.id ){
-        found=true;
-        item.rank++ ;
-       return res.json(item.rank);
-    }
-
-   }) ;
-
-
-   if (!found){
-       res.status(404).json("Not Found");
-   }
-
-
-})
+app.post('/imageUrl', (req, res) => FaceDetectionController(req, res));
+app.put('/image', (req, res) =>{ ImageController(req, res, db) ; });
 
 app.listen(port, () => {
     console.log("this is working in port 3000");
 });
-
-
